@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  password-manager:
+    build: .
+    container_name: password-manager-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80

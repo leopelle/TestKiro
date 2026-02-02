@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active">
+            <div class="container">
+                <div class="logo">🔐</div>
+                <h1>Password Manager</h1>
+                <p class="subtitle">Gestione sicura delle tue password</p>
+                
+                <div class="card">
+                    <h2>Accedi</h2>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="pin">PIN (4-8 cifre)</label>
+                            <input type="password" id="pin" maxlength="8" pattern="[0-9]*" inputmode="numeric" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sblocca Vault</button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>oppure</span>
+                    </div>
+                    
+                    <button id="biometric-btn" class="btn btn-secondary btn-biometric" style="display: none;">
+                        <span id="biometric-icon">🔐</span>
+                        <span id="biometric-text">Sblocca con Touch ID</span>
+                    </button>
+                    
+                    <p class="hint">Demo PIN: 123456</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Screen -->
+        <div id="main-screen" class="screen">
+            <header>
+                <div class="header-content">
+                    <h1>🔐 Password Manager</h1>
+                    <div class="header-actions">
+                        <button id="add-item-btn" class="btn btn-primary">+ Nuovo</button>
+                        <button id="settings-btn" class="btn btn-secondary">⚙️ Impostazioni</button>
+                        <button id="backup-btn" class="btn btn-secondary">💾 Backup</button>
+                        <button id="logout-btn" class="btn btn-secondary">🔒 Blocca</button>
+                    </div>
+                </div>
+            </header>
+
+            <main>
+                <div class="container">
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab active" data-tab="passwords" onclick="switchTab('passwords')">
+                            🔑 Password
+                        </button>
+                        <button class="tab" data-tab="cards" onclick="switchTab('cards')">
+                            💳 Carte di Credito
+                        </button>
+                        <button class="tab" data-tab="documents" onclick="switchTab('documents')">
+                            📄 Documenti
+                        </button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="🔍 Cerca...">
+                    </div>
+
+                    <!-- Password List -->
+                    <div id="password-list" class="password-list item-list">
+                        <div class="empty-state">
+                            <p>Nessuna password salvata</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('add-password-btn').click()">
+                                Aggiungi la prima password
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Credit Card List -->
+                    <div id="card-list" class="card-list item-list" style="display: none;">
+                        <div class="empty-state">
+                            <p>Nessuna carta salvata</p>
+                            <button class="btn btn-primary" onclick="openCardModal()">
+                                Aggiungi la prima carta
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Document List -->
+                    <div id="document-list" class="document-list item-list" style="display: none;">
+                        <div class="empty-state">
+                            <p>Nessun documento salvato</p>
+                            <button class="btn btn-primary" onclick="openDocumentModal()">
+                                Aggiungi il primo documento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Add/Edit Password Modal -->
+        <div id="password-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">Nuova Password</h2>
+                    <button class="close-btn" onclick="closePasswordModal()">&times;</button>
+                </div>
+                <form id="password-form">
+                    <div class="form-group">
+                        <label for="item-title">Titolo *</label>
+                        <input type="text" id="item-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-username">Username *</label>
+                        <input type="text" id="item-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-password">Password *</label>
+                        <div class="password-input-group">
+                            <input type="password" id="item-password" required>
+                            <button type="button" class="btn-icon" onclick="togglePasswordVisibility()">👁️</button>
+                            <button type="button" class="btn-icon" onclick="generatePassword()">🎲</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-url">URL</label>
+                        <input type="url" id="item-url" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-notes">Note</label>
+                        <textarea id="item-notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-tags">Tag (separati da virgola)</label>
+                        <input type="text" id="item-tags" placeholder="lavoro, importante">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Credit Card Modal -->
+        <div id="card-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="card-modal-title">Nuova Carta di Credito</h2>
+                    <button class="close-btn" onclick="closeCardModal()">&times;</button>
+                </div>
+                <form id="card-form">
+                    <div class="form-group">
+                        <label for="card-title">Nome Carta *</label>
+                        <input type="text" id="card-title" placeholder="Es: Visa Personale" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-number">Numero Carta *</label>
+                        <input type="text" id="card-number" maxlength="19" placeholder="1234 5678 9012 3456" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-holder">Titolare *</label>
+                        <input type="text" id="card-holder" placeholder="MARIO ROSSI" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-expiry">Scadenza (MM/AA) *</label>
+                            <input type="text" id="card-expiry" maxlength="5" placeholder="12/25" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="card-cvv">CVV *</label>
+                            <input type="password" id="card-cvv" maxlength="4" placeholder="123" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-notes">Note</label>
+                        <textarea id="card-notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-tags">Tag (separati da virgola)</label>
+                        <input type="text" id="card-tags" placeholder="personale, principale">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeCardModal()">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Document Modal -->
+        <div id="document-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="document-modal-title">Nuovo Documento</h2>
+                    <button class="close-btn" onclick="closeDocumentModal()">&times;</button>
+                </div>
+                <form id="document-form">
+                    <div class="form-group">
+                        <label for="doc-type">Tipo Documento *</label>
+                        <select id="doc-type" required>
+                            <option value="">Seleziona tipo...</option>
+                            <option value="passport">🛂 Passaporto</option>
+                            <option value="id-card">🪪 Carta d'Identità</option>
+                            <option value="driver-license">🚗 Patente</option>
+                            <option value="other">📄 Altro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-title">Titolo *</label>
+                        <input type="text" id="doc-title" placeholder="Es: Passaporto Italiano" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-number">Numero Documento</label>
+                        <input type="text" id="doc-number" placeholder="Es: AA1234567">
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-issuer">Ente Emittente</label>
+                        <input type="text" id="doc-issuer" placeholder="Es: Comune di Roma">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="doc-issue-date">Data Rilascio</label>
+                            <input type="date" id="doc-issue-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="doc-expiry-date">Data Scadenza</label>
+                            <input type="date" id="doc-expiry-date">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-image">Immagine/Scansione</label>
+                        <input type="file" id="doc-image" accept="image/*,.pdf">
+                        <small>Formati supportati: JPG, PNG, PDF (max 5MB)</small>
+                    </div>
+                    <div id="doc-preview" class="doc-preview"></div>
+                    <div class="form-group">
+                        <label for="doc-notes">Note</label>
+                        <textarea id="doc-notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-tags">Tag (separati da virgola)</label>
+                        <input type="text" id="doc-tags" placeholder="importante, viaggio">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeDocumentModal()">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Backup Modal -->
+        <div id="backup-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Backup Vault</h2>
+                    <button class="close-btn" onclick="closeBackupModal()">&times;</button>
+                </div>
+                <div class="backup-content">
+                    <p>Crea un backup crittografato del tuo vault.</p>
+                    <div class="backup-info">
+                        <p><strong>Password salvate:</strong> <span id="backup-count">0</span></p>
+                        <p><strong>Ultima modifica:</strong> <span id="backup-date">-</span></p>
+                    </div>
+                    <button class="btn btn-primary" onclick="createBackup()">📥 Scarica Backup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ Impostazioni</h2>
+                    <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+                </div>
+                <div class="settings-content">
+                    <h3>Cambia PIN</h3>
+                    <p>Modifica il PIN di accesso al vault</p>
+                    <form id="change-pin-form">
+                        <div class="form-group">
+                            <label for="current-pin">PIN Attuale *</label>
+                            <input type="password" id="current-pin" maxlength="8" pattern="[0-9]*" inputmode="numeric" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-pin">Nuovo PIN (4-8 cifre) *</label>
+                            <input type="password" id="new-pin" maxlength="8" pattern="[0-9]*" inputmode="numeric" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-pin">Conferma Nuovo PIN *</label>
+                            <input type="password" id="confirm-pin" maxlength="8" pattern="[0-9]*" inputmode="numeric" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cambia PIN</button>
+                    </form>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+                    
+                    <h3>Sicurezza</h3>
+                    <div class="backup-info">
+                        <p><strong>Autenticazione Biometrica:</strong> 
+                            <span id="biometric-status">Non configurata</span>
+                        </p>
+                    </div>
+                    <button id="setup-biometric-btn" class="btn btn-secondary" onclick="setupBiometric()">
+                        🔐 Configura Touch ID / Face ID
+                    </button>
+                    <button id="remove-biometric-btn" class="btn btn-danger" onclick="removeBiometric()" style="display: none; margin-top: 0.5rem;">
+                        Rimuovi Autenticazione Biometrica
+                    </button>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+                    
+                    <h3>Statistiche Vault</h3>
+                    <div class="backup-info">
+                        <p><strong>Password:</strong> <span id="stats-passwords">0</span></p>
+                        <p><strong>Carte di credito:</strong> <span id="stats-cards">0</span></p>
+                        <p><strong>Documenti:</strong> <span id="stats-documents">0</span></p>
+                    </div>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+                    
+                    <h3>Zona Pericolosa</h3>
+                    <p style="color: var(--danger-color); font-size: 0.875rem;">Attenzione: queste azioni sono irreversibili!</p>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ Cancella Tutti i Dati</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
