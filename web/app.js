@@ -80,6 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeApp() {
   console.log('Initializing app...');
   
+  // Carica tema salvato
+  loadTheme();
+  
   // Carica dati salvati
   const savedPasswords = storage.load('passwords');
   if (savedPasswords) {
@@ -1399,3 +1402,67 @@ openSettingsModal = function() {
 // Export biometric functions
 window.setupBiometric = setupBiometric;
 window.removeBiometric = removeBiometric;
+
+
+// ===== DARK MODE / THEME MANAGEMENT =====
+
+function loadTheme() {
+  const savedTheme = storage.load('theme') || 'auto';
+  applyTheme(savedTheme);
+  updateThemeSelector(savedTheme);
+}
+
+function setTheme(theme) {
+  storage.save('theme', theme);
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  
+  console.log('Applying theme:', theme);
+  
+  if (theme === 'dark') {
+    html.setAttribute('data-theme', 'dark');
+    console.log('Dark theme applied, data-theme:', html.getAttribute('data-theme'));
+  } else if (theme === 'light') {
+    html.setAttribute('data-theme', 'light');
+    console.log('Light theme applied, data-theme:', html.getAttribute('data-theme'));
+  } else {
+    // Auto mode - use system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    console.log('Auto theme applied, prefersDark:', prefersDark, 'data-theme:', html.getAttribute('data-theme'));
+  }
+  
+  console.log('Theme applied:', theme);
+}
+
+function updateThemeSelector(theme) {
+  const radios = document.querySelectorAll('input[name="theme"]');
+  radios.forEach(radio => {
+    if (radio.value === theme) {
+      radio.checked = true;
+    }
+  });
+}
+
+// Listen for system theme changes when in auto mode
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  const currentTheme = storage.load('theme') || 'auto';
+  if (currentTheme === 'auto') {
+    applyTheme('auto');
+  }
+});
+
+// Update theme selector when opening settings
+const originalOpenSettingsModal2 = openSettingsModal;
+openSettingsModal = function() {
+  originalOpenSettingsModal2();
+  updateBiometricStatus();
+  const currentTheme = storage.load('theme') || 'auto';
+  updateThemeSelector(currentTheme);
+};
+
+// Export theme functions
+window.setTheme = setTheme;

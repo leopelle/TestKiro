@@ -317,6 +317,25 @@
                     
                     <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
                     
+                    <h3>Aspetto</h3>
+                    <p>Scegli il tema dell'interfaccia</p>
+                    <div class="theme-selector">
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="light" onchange="setTheme('light')">
+                            <span>☀️ Chiaro</span>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="dark" onchange="setTheme('dark')">
+                            <span>🌙 Scuro</span>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="auto" onchange="setTheme('auto')">
+                            <span>🔄 Automatico</span>
+                        </label>
+                    </div>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+                    
                     <h3>Statistiche Vault</h3>
                     <div class="backup-info">
                         <p><strong>Password:</strong> <span id="stats-passwords">0</span></p>
