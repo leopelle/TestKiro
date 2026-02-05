@@ -126,7 +126,18 @@ function setupEventListeners() {
   
   // Main screen buttons
   const addBtn = document.getElementById('add-item-btn');
-  if (addBtn) addBtn.addEventListener('click', handleAddItem);
+  if (addBtn) {
+    addBtn.addEventListener('click', toggleAddMenu);
+  }
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.dropdown');
+    const menu = document.getElementById('add-menu');
+    if (dropdown && menu && !dropdown.contains(e.target)) {
+      menu.classList.remove('show');
+    }
+  });
   
   const backupBtn = document.getElementById('backup-btn');
   if (backupBtn) backupBtn.addEventListener('click', () => openBackupModal());
@@ -456,16 +467,18 @@ function renderDocumentCard(item) {
   `;
 }
 
+function toggleAddMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('add-menu');
+  if (menu) {
+    menu.classList.toggle('show');
+  }
+}
+
 function openAddMenu() {
-  // Mostra un menu per scegliere cosa aggiungere
-  const choice = prompt('Cosa vuoi aggiungere?\n1 - Password\n2 - Carta di Credito\n3 - Documento');
-  
-  if (choice === '1') {
-    openPasswordModal();
-  } else if (choice === '2') {
-    openCardModal();
-  } else if (choice === '3') {
-    openDocumentModal();
+  const menu = document.getElementById('add-menu');
+  if (menu) {
+    menu.classList.add('show');
   }
 }
 
@@ -1046,6 +1059,7 @@ window.deleteCard = deleteCard;
 window.copyCardNumber = copyCardNumber;
 window.copyCVV = copyCVV;
 window.openAddMenu = openAddMenu;
+window.toggleAddMenu = toggleAddMenu;
 
 
 // ===== DOCUMENT MANAGEMENT =====

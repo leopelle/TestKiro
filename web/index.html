@@ -43,7 +43,14 @@
                 <div class="header-content">
                     <h1>🔐 Password Manager</h1>
                     <div class="header-actions">
-                        <button id="add-item-btn" class="btn btn-primary">+ Nuovo</button>
+                        <div class="dropdown">
+                            <button id="add-item-btn" class="btn btn-primary dropdown-toggle">+ Nuovo</button>
+                            <div id="add-menu" class="dropdown-menu">
+                                <button class="dropdown-item" onclick="openPasswordModal()">🔑 Password</button>
+                                <button class="dropdown-item" onclick="openCardModal()">💳 Carta di Credito</button>
+                                <button class="dropdown-item" onclick="openDocumentModal()">📄 Documento</button>
+                            </div>
+                        </div>
                         <button id="settings-btn" class="btn btn-secondary">⚙️ Impostazioni</button>
                         <button id="backup-btn" class="btn btn-secondary">💾 Backup</button>
                         <button id="logout-btn" class="btn btn-secondary">🔒 Blocca</button>
