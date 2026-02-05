@@ -55,7 +55,10 @@
                 <div class="container">
                     <!-- Tabs -->
                     <div class="tabs">
-                        <button class="tab active" data-tab="passwords" onclick="switchTab('passwords')">
+                        <button class="tab active" data-tab="all" onclick="switchTab('all')">
+                            📋 Tutti gli elementi
+                        </button>
+                        <button class="tab" data-tab="passwords" onclick="switchTab('passwords')">
                             🔑 Password
                         </button>
                         <button class="tab" data-tab="cards" onclick="switchTab('cards')">
@@ -71,32 +74,12 @@
                         <input type="text" id="search-input" placeholder="🔍 Cerca...">
                     </div>
 
-                    <!-- Password List -->
-                    <div id="password-list" class="password-list item-list">
+                    <!-- Unified List -->
+                    <div id="unified-list" class="unified-list item-list">
                         <div class="empty-state">
-                            <p>Nessuna password salvata</p>
-                            <button class="btn btn-primary" onclick="document.getElementById('add-password-btn').click()">
-                                Aggiungi la prima password
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Credit Card List -->
-                    <div id="card-list" class="card-list item-list" style="display: none;">
-                        <div class="empty-state">
-                            <p>Nessuna carta salvata</p>
-                            <button class="btn btn-primary" onclick="openCardModal()">
-                                Aggiungi la prima carta
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Document List -->
-                    <div id="document-list" class="document-list item-list" style="display: none;">
-                        <div class="empty-state">
-                            <p>Nessun documento salvato</p>
-                            <button class="btn btn-primary" onclick="openDocumentModal()">
-                                Aggiungi il primo documento
+                            <p>Nessun elemento salvato</p>
+                            <button class="btn btn-primary" onclick="openAddMenu()">
+                                Aggiungi il primo elemento
                             </button>
                         </div>
                     </div>

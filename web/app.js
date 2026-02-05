@@ -9,7 +9,7 @@ const state = {
   masterKey: null,
   vault: null,
   currentEditingId: null,
-  currentTab: 'passwords',
+  currentTab: 'all',
   currentPIN: null,
   passwords: [],
   cards: [],
@@ -202,7 +202,7 @@ async function handleLogin(e) {
   
   // Mostra schermata principale
   showScreen('main-screen');
-  renderPasswordList();
+  renderUnifiedList();
   
   console.log('Vault unlocked!');
 }
@@ -232,6 +232,240 @@ function showScreen(screenId) {
     console.log('Added active to:', screenId);
   } else {
     console.error('Screen not found:', screenId);
+  }
+}
+
+function renderUnifiedList(filteredItems = null) {
+  const list = document.getElementById('unified-list');
+  
+  // Combina tutti gli elementi
+  let allItems = [];
+  
+  if (state.currentTab === 'all') {
+    allItems = [
+      ...state.passwords.map(p => ({ ...p, itemType: 'password' })),
+      ...state.cards.map(c => ({ ...c, itemType: 'card' })),
+      ...state.documents.map(d => ({ ...d, itemType: 'document' }))
+    ];
+  } else if (state.currentTab === 'passwords') {
+    allItems = state.passwords.map(p => ({ ...p, itemType: 'password' }));
+  } else if (state.currentTab === 'cards') {
+    allItems = state.cards.map(c => ({ ...c, itemType: 'card' }));
+  } else if (state.currentTab === 'documents') {
+    allItems = state.documents.map(d => ({ ...d, itemType: 'document' }));
+  }
+  
+  // Ordina per data di aggiornamento (più recenti prima)
+  allItems.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  
+  // Applica filtro se presente
+  const items = filteredItems || allItems;
+  
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <p>Nessun elemento trovato</p>
+        <button class="btn btn-primary" onclick="openAddMenu()">
+          Aggiungi elemento
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  list.innerHTML = items.map(item => {
+    if (item.itemType === 'password') {
+      return renderPasswordCard(item);
+    } else if (item.itemType === 'card') {
+      return renderCardCard(item);
+    } else if (item.itemType === 'document') {
+      return renderDocumentCard(item);
+    }
+  }).join('');
+}
+
+function renderPasswordCard(item) {
+  return `
+    <div class="unified-card password-card">
+      <div class="card-header">
+        <div class="card-icon">🔑</div>
+        <div class="card-info">
+          <div class="card-title">${escapeHtml(item.title)}</div>
+          <div class="card-subtitle">Password</div>
+          ${item.url ? `<div class="card-meta">${escapeHtml(item.url)}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'username')" title="Copia username">
+            📋
+          </button>
+          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'password')" title="Copia password">
+            🔑
+          </button>
+          <button class="btn btn-small btn-secondary" onclick="editPassword('${item.id}')" title="Modifica">
+            ✏️
+          </button>
+          <button class="btn btn-small btn-danger" onclick="deletePassword('${item.id}')" title="Elimina">
+            🗑️
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-field">
+          <span class="field-label">Username:</span>
+          <span class="field-value">${escapeHtml(item.username)}</span>
+        </div>
+        <div class="card-field">
+          <span class="field-label">Password:</span>
+          <span class="field-value">••••••••</span>
+        </div>
+        ${item.notes ? `
+          <div class="card-field">
+            <span class="field-label">Note:</span>
+            <span class="field-value">${escapeHtml(item.notes)}</span>
+          </div>
+        ` : ''}
+      </div>
+      ${item.tags && item.tags.length > 0 ? `
+        <div class="card-tags">
+          ${item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderCardCard(item) {
+  const maskedNumber = maskCardNumber(item.cardNumber);
+  const isExpiring = checkExpiring(item.expiryDate);
+  
+  return `
+    <div class="unified-card card-card">
+      <div class="card-header">
+        <div class="card-icon">💳</div>
+        <div class="card-info">
+          <div class="card-title">${escapeHtml(item.title)}</div>
+          <div class="card-subtitle">Carta di Credito</div>
+          <div class="card-meta">${maskedNumber}</div>
+          ${isExpiring ? '<div class="expiry-warning">⚠️ In scadenza tra 30 giorni</div>' : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-small btn-secondary" onclick="copyCardNumber('${item.id}')" title="Copia numero">
+            📋
+          </button>
+          <button class="btn btn-small btn-secondary" onclick="copyCVV('${item.id}')" title="Copia CVV">
+            🔢
+          </button>
+          <button class="btn btn-small btn-secondary" onclick="editCard('${item.id}')" title="Modifica">
+            ✏️
+          </button>
+          <button class="btn btn-small btn-danger" onclick="deleteCard('${item.id}')" title="Elimina">
+            🗑️
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-field">
+          <span class="field-label">Titolare:</span>
+          <span class="field-value">${escapeHtml(item.holderName)}</span>
+        </div>
+        <div class="card-field">
+          <span class="field-label">Scadenza:</span>
+          <span class="field-value">${escapeHtml(item.expiryDate)}</span>
+        </div>
+        <div class="card-field">
+          <span class="field-label">CVV:</span>
+          <span class="field-value">•••</span>
+        </div>
+        ${item.notes ? `
+          <div class="card-field">
+            <span class="field-label">Note:</span>
+            <span class="field-value">${escapeHtml(item.notes)}</span>
+          </div>
+        ` : ''}
+      </div>
+      ${item.tags && item.tags.length > 0 ? `
+        <div class="card-tags">
+          ${item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderDocumentCard(item) {
+  const typeIcon = getDocTypeIcon(item.docType);
+  const isExpiring = item.expiryDate && checkDocExpiring(item.expiryDate);
+  
+  return `
+    <div class="unified-card document-card">
+      <div class="card-header">
+        <div class="card-icon">${typeIcon}</div>
+        <div class="card-info">
+          <div class="card-title">${escapeHtml(item.title)}</div>
+          <div class="card-subtitle">Documento</div>
+          ${item.docNumber ? `<div class="card-meta">N° ${escapeHtml(item.docNumber)}</div>` : ''}
+          ${isExpiring ? '<div class="expiry-warning">⚠️ In scadenza tra 30 giorni</div>' : ''}
+        </div>
+        <div class="card-actions">
+          ${item.imageData ? `<button class="btn btn-small btn-secondary" onclick="viewDocImage('${item.id}')" title="Visualizza">👁️</button>` : ''}
+          <button class="btn btn-small btn-secondary" onclick="editDocument('${item.id}')" title="Modifica">
+            ✏️
+          </button>
+          <button class="btn btn-small btn-danger" onclick="deleteDocument('${item.id}')" title="Elimina">
+            🗑️
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        ${item.issuer ? `
+          <div class="card-field">
+            <span class="field-label">Emittente:</span>
+            <span class="field-value">${escapeHtml(item.issuer)}</span>
+          </div>
+        ` : ''}
+        ${item.issueDate ? `
+          <div class="card-field">
+            <span class="field-label">Rilascio:</span>
+            <span class="field-value">${formatDate(item.issueDate)}</span>
+          </div>
+        ` : ''}
+        ${item.expiryDate ? `
+          <div class="card-field">
+            <span class="field-label">Scadenza:</span>
+            <span class="field-value">${formatDate(item.expiryDate)}</span>
+          </div>
+        ` : ''}
+        ${item.notes ? `
+          <div class="card-field">
+            <span class="field-label">Note:</span>
+            <span class="field-value">${escapeHtml(item.notes)}</span>
+          </div>
+        ` : ''}
+        ${item.imageData ? `
+          <div class="card-field">
+            <img src="${item.imageData}" class="doc-thumbnail" onclick="viewDocImage('${item.id}')" alt="Thumbnail">
+          </div>
+        ` : ''}
+      </div>
+      ${item.tags && item.tags.length > 0 ? `
+        <div class="card-tags">
+          ${item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function openAddMenu() {
+  // Mostra un menu per scegliere cosa aggiungere
+  const choice = prompt('Cosa vuoi aggiungere?\n1 - Password\n2 - Carta di Credito\n3 - Documento');
+  
+  if (choice === '1') {
+    openPasswordModal();
+  } else if (choice === '2') {
+    openCardModal();
+  } else if (choice === '3') {
+    openDocumentModal();
   }
 }
 
@@ -302,19 +536,44 @@ function handleSearch(e) {
   const query = e.target.value.toLowerCase();
   
   if (!query) {
-    renderPasswordList();
+    renderUnifiedList();
     return;
   }
   
-  const filtered = state.passwords.filter(item => {
-    return item.title.toLowerCase().includes(query) ||
-           item.username.toLowerCase().includes(query) ||
-           (item.url && item.url.toLowerCase().includes(query)) ||
-           (item.notes && item.notes.toLowerCase().includes(query)) ||
-           (item.tags && item.tags.some(tag => tag.toLowerCase().includes(query)));
+  // Combina tutti gli elementi
+  let allItems = [
+    ...state.passwords.map(p => ({ ...p, itemType: 'password' })),
+    ...state.cards.map(c => ({ ...c, itemType: 'card' })),
+    ...state.documents.map(d => ({ ...d, itemType: 'document' }))
+  ];
+  
+  // Filtra in base al tab corrente
+  if (state.currentTab === 'passwords') {
+    allItems = allItems.filter(item => item.itemType === 'password');
+  } else if (state.currentTab === 'cards') {
+    allItems = allItems.filter(item => item.itemType === 'card');
+  } else if (state.currentTab === 'documents') {
+    allItems = allItems.filter(item => item.itemType === 'document');
+  }
+  
+  // Filtra per query
+  const filtered = allItems.filter(item => {
+    const searchFields = [
+      item.title,
+      item.username,
+      item.url,
+      item.notes,
+      item.holderName,
+      item.cardNumber,
+      item.docNumber,
+      item.issuer,
+      ...(item.tags || [])
+    ].filter(Boolean).map(f => f.toLowerCase());
+    
+    return searchFields.some(field => field.includes(query));
   });
   
-  renderPasswordList(filtered);
+  renderUnifiedList(filtered);
 }
 
 function openPasswordModal(id = null) {
@@ -385,7 +644,7 @@ function handlePasswordSave(e) {
   storage.save('passwords', state.passwords);
   
   // Update UI
-  renderPasswordList();
+  renderUnifiedList();
   closePasswordModal();
 }
 
@@ -400,7 +659,7 @@ function deletePassword(id) {
   
   state.passwords = state.passwords.filter(p => p.id !== id);
   storage.save('passwords', state.passwords);
-  renderPasswordList();
+  renderUnifiedList();
 }
 
 function copyToClipboard(id, field) {
@@ -508,31 +767,12 @@ function switchTab(tab) {
   });
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   
-  // Show/hide lists
-  document.getElementById('password-list').style.display = 'none';
-  document.getElementById('card-list').style.display = 'none';
-  document.getElementById('document-list').style.display = 'none';
-  
-  if (tab === 'passwords') {
-    document.getElementById('password-list').style.display = 'grid';
-    renderPasswordList();
-  } else if (tab === 'cards') {
-    document.getElementById('card-list').style.display = 'grid';
-    renderCardList();
-  } else if (tab === 'documents') {
-    document.getElementById('document-list').style.display = 'grid';
-    renderDocumentList();
-  }
+  // Render unified list with filter
+  renderUnifiedList();
 }
 
 function handleAddItem() {
-  if (state.currentTab === 'passwords') {
-    openPasswordModal();
-  } else if (state.currentTab === 'cards') {
-    openCardModal();
-  } else if (state.currentTab === 'documents') {
-    openDocumentModal();
-  }
+  openAddMenu();
 }
 
 function openCardModal(id = null) {
@@ -613,7 +853,7 @@ function handleCardSave(e) {
   storage.save('cards', state.cards);
   
   // Update UI
-  renderCardList();
+  renderUnifiedList();
   closeCardModal();
 }
 
@@ -701,7 +941,7 @@ function deleteCard(id) {
   
   state.cards = state.cards.filter(c => c.id !== id);
   storage.save('cards', state.cards);
-  renderCardList();
+  renderUnifiedList();
 }
 
 function copyCardNumber(id) {
@@ -805,6 +1045,7 @@ window.editCard = editCard;
 window.deleteCard = deleteCard;
 window.copyCardNumber = copyCardNumber;
 window.copyCVV = copyCVV;
+window.openAddMenu = openAddMenu;
 
 
 // ===== DOCUMENT MANAGEMENT =====
@@ -929,7 +1170,7 @@ function handleDocumentSave(e) {
     storage.save('documents', state.documents);
     
     // Update UI
-    renderDocumentList();
+    renderUnifiedList();
     closeDocumentModal();
   };
   
@@ -1035,7 +1276,7 @@ function deleteDocument(id) {
   
   state.documents = state.documents.filter(d => d.id !== id);
   storage.save('documents', state.documents);
-  renderDocumentList();
+  renderUnifiedList();
 }
 
 function viewDocImage(id) {
