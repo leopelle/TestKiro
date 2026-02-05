@@ -303,14 +303,10 @@ function renderPasswordCard(item) {
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
           <div class="card-subtitle">Password</div>
-          ${item.url ? `<div class="card-meta">${escapeHtml(item.url)}</div>` : ''}
         </div>
         <div class="card-actions">
-          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'username')" title="Copia username">
+          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'password')" title="Copia">
             📋
-          </button>
-          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'password')" title="Copia password">
-            🔑
           </button>
           <button class="btn btn-small btn-secondary" onclick="editPassword('${item.id}')" title="Modifica">
             ✏️
@@ -322,19 +318,10 @@ function renderPasswordCard(item) {
       </div>
       <div class="card-body">
         <div class="card-field">
-          <span class="field-label">Username:</span>
+          <span class="field-label">User:</span>
           <span class="field-value">${escapeHtml(item.username)}</span>
         </div>
-        <div class="card-field">
-          <span class="field-label">Password:</span>
-          <span class="field-value">••••••••</span>
-        </div>
-        ${item.notes ? `
-          <div class="card-field">
-            <span class="field-label">Note:</span>
-            <span class="field-value">${escapeHtml(item.notes)}</span>
-          </div>
-        ` : ''}
+        ${item.url ? `<div class="card-field"><span class="field-label">URL:</span><span class="field-value">${escapeHtml(item.url)}</span></div>` : ''}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div class="card-tags">
@@ -355,16 +342,11 @@ function renderCardCard(item) {
         <div class="card-icon">💳</div>
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
-          <div class="card-subtitle">Carta di Credito</div>
-          <div class="card-meta">${maskedNumber}</div>
-          ${isExpiring ? '<div class="expiry-warning">⚠️ In scadenza tra 30 giorni</div>' : ''}
+          <div class="card-subtitle">Carta ${isExpiring ? '⚠️' : ''}</div>
         </div>
         <div class="card-actions">
-          <button class="btn btn-small btn-secondary" onclick="copyCardNumber('${item.id}')" title="Copia numero">
+          <button class="btn btn-small btn-secondary" onclick="copyCardNumber('${item.id}')" title="Copia">
             📋
-          </button>
-          <button class="btn btn-small btn-secondary" onclick="copyCVV('${item.id}')" title="Copia CVV">
-            🔢
           </button>
           <button class="btn btn-small btn-secondary" onclick="editCard('${item.id}')" title="Modifica">
             ✏️
@@ -376,23 +358,13 @@ function renderCardCard(item) {
       </div>
       <div class="card-body">
         <div class="card-field">
-          <span class="field-label">Titolare:</span>
-          <span class="field-value">${escapeHtml(item.holderName)}</span>
+          <span class="field-label">Numero:</span>
+          <span class="field-value">${maskedNumber}</span>
         </div>
         <div class="card-field">
           <span class="field-label">Scadenza:</span>
           <span class="field-value">${escapeHtml(item.expiryDate)}</span>
         </div>
-        <div class="card-field">
-          <span class="field-label">CVV:</span>
-          <span class="field-value">•••</span>
-        </div>
-        ${item.notes ? `
-          <div class="card-field">
-            <span class="field-label">Note:</span>
-            <span class="field-value">${escapeHtml(item.notes)}</span>
-          </div>
-        ` : ''}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div class="card-tags">
@@ -413,12 +385,10 @@ function renderDocumentCard(item) {
         <div class="card-icon">${typeIcon}</div>
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
-          <div class="card-subtitle">Documento</div>
-          ${item.docNumber ? `<div class="card-meta">N° ${escapeHtml(item.docNumber)}</div>` : ''}
-          ${isExpiring ? '<div class="expiry-warning">⚠️ In scadenza tra 30 giorni</div>' : ''}
+          <div class="card-subtitle">Documento ${isExpiring ? '⚠️' : ''}</div>
         </div>
         <div class="card-actions">
-          ${item.imageData ? `<button class="btn btn-small btn-secondary" onclick="viewDocImage('${item.id}')" title="Visualizza">👁️</button>` : ''}
+          ${item.imageData ? `<button class="btn btn-small btn-secondary" onclick="viewDocImage('${item.id}')" title="Vedi">👁️</button>` : ''}
           <button class="btn btn-small btn-secondary" onclick="editDocument('${item.id}')" title="Modifica">
             ✏️
           </button>
@@ -428,35 +398,8 @@ function renderDocumentCard(item) {
         </div>
       </div>
       <div class="card-body">
-        ${item.issuer ? `
-          <div class="card-field">
-            <span class="field-label">Emittente:</span>
-            <span class="field-value">${escapeHtml(item.issuer)}</span>
-          </div>
-        ` : ''}
-        ${item.issueDate ? `
-          <div class="card-field">
-            <span class="field-label">Rilascio:</span>
-            <span class="field-value">${formatDate(item.issueDate)}</span>
-          </div>
-        ` : ''}
-        ${item.expiryDate ? `
-          <div class="card-field">
-            <span class="field-label">Scadenza:</span>
-            <span class="field-value">${formatDate(item.expiryDate)}</span>
-          </div>
-        ` : ''}
-        ${item.notes ? `
-          <div class="card-field">
-            <span class="field-label">Note:</span>
-            <span class="field-value">${escapeHtml(item.notes)}</span>
-          </div>
-        ` : ''}
-        ${item.imageData ? `
-          <div class="card-field">
-            <img src="${item.imageData}" class="doc-thumbnail" onclick="viewDocImage('${item.id}')" alt="Thumbnail">
-          </div>
-        ` : ''}
+        ${item.docNumber ? `<div class="card-field"><span class="field-label">N°:</span><span class="field-value">${escapeHtml(item.docNumber)}</span></div>` : ''}
+        ${item.expiryDate ? `<div class="card-field"><span class="field-label">Scadenza:</span><span class="field-value">${formatDate(item.expiryDate)}</span></div>` : ''}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div class="card-tags">
