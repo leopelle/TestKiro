@@ -198,17 +198,45 @@ main {
   border-bottom-color: var(--primary-color);
 }
 
-/* Search Bar */
-.search-bar {
+/* Search Bar with Filter */
+.search-bar-container {
   margin-bottom: 2rem;
 }
 
-.search-bar input {
-  width: 100%;
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-dropdown {
   padding: 0.75rem 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.toolbar .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Password List */
@@ -649,15 +677,23 @@ main {
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: var(--shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   min-height: 180px;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  user-select: none;
 }
 
 .unified-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
+}
+
+.unified-card.selected {
+  border-color: var(--primary-color);
+  border-width: 2px;
+  background: var(--background);
 }
 
 .card-header {
@@ -743,6 +779,20 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.field-value:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.field-value.copied {
+  background: var(--success-color);
+  color: white;
 }
 
 .card-tags {

@@ -60,25 +60,22 @@
 
             <main>
                 <div class="container">
-                    <!-- Tabs -->
-                    <div class="tabs">
-                        <button class="tab active" data-tab="all" onclick="switchTab('all')">
-                            📋 Tutti gli elementi
-                        </button>
-                        <button class="tab" data-tab="passwords" onclick="switchTab('passwords')">
-                            🔑 Password
-                        </button>
-                        <button class="tab" data-tab="cards" onclick="switchTab('cards')">
-                            💳 Carte di Credito
-                        </button>
-                        <button class="tab" data-tab="documents" onclick="switchTab('documents')">
-                            📄 Documenti
-                        </button>
-                    </div>
-
-                    <!-- Search Bar -->
-                    <div class="search-bar">
-                        <input type="text" id="search-input" placeholder="🔍 Cerca...">
+                    <!-- Search Bar with Filter -->
+                    <div class="search-bar-container">
+                        <div class="search-bar">
+                            <select id="filter-type" class="filter-dropdown">
+                                <option value="all">Tutti</option>
+                                <option value="passwords">Password</option>
+                                <option value="cards">Carte</option>
+                                <option value="documents">Documenti</option>
+                            </select>
+                            <input type="text" id="search-input" placeholder="🔍 Cerca...">
+                        </div>
+                        <div class="toolbar">
+                            <button id="edit-btn" class="btn btn-secondary" disabled onclick="editSelected()">✏️ Modifica</button>
+                            <button id="duplicate-btn" class="btn btn-secondary" disabled onclick="duplicateSelected()">📋 Duplica</button>
+                            <button id="delete-btn" class="btn btn-danger" disabled onclick="deleteSelected()">🗑️ Elimina</button>
+                        </div>
                     </div>
 
                     <!-- Unified List -->

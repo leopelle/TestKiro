@@ -13,7 +13,8 @@ const state = {
   currentPIN: null,
   passwords: [],
   cards: [],
-  documents: []
+  documents: [],
+  selectedItem: null
 };
 
 // Utility per crittografia (simulata per demo)
@@ -151,6 +152,10 @@ function setupEventListeners() {
   // Search
   const searchInput = document.getElementById('search-input');
   if (searchInput) searchInput.addEventListener('input', handleSearch);
+  
+  // Filter dropdown
+  const filterType = document.getElementById('filter-type');
+  if (filterType) filterType.addEventListener('change', handleFilterChange);
   
   // Password form
   const passwordForm = document.getElementById('password-form');
@@ -297,31 +302,24 @@ function renderUnifiedList(filteredItems = null) {
 
 function renderPasswordCard(item) {
   return `
-    <div class="unified-card password-card">
+    <div class="unified-card password-card" data-id="${item.id}" data-type="password" onclick="selectCard(event, '${item.id}', 'password')">
       <div class="card-header">
         <div class="card-icon">🔑</div>
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
           <div class="card-subtitle">Password</div>
         </div>
-        <div class="card-actions">
-          <button class="btn btn-small btn-secondary" onclick="copyToClipboard('${item.id}', 'password')" title="Copia">
-            📋
-          </button>
-          <button class="btn btn-small btn-secondary" onclick="editPassword('${item.id}')" title="Modifica">
-            ✏️
-          </button>
-          <button class="btn btn-small btn-danger" onclick="deletePassword('${item.id}')" title="Elimina">
-            🗑️
-          </button>
-        </div>
       </div>
       <div class="card-body">
         <div class="card-field">
           <span class="field-label">User:</span>
-          <span class="field-value">${escapeHtml(item.username)}</span>
+          <span class="field-value" onclick="copyField(event, '${escapeHtml(item.username)}')">${escapeHtml(item.username)}</span>
         </div>
-        ${item.url ? `<div class="card-field"><span class="field-label">URL:</span><span class="field-value">${escapeHtml(item.url)}</span></div>` : ''}
+        <div class="card-field">
+          <span class="field-label">Pass:</span>
+          <span class="field-value" onclick="copyField(event, '${escapeHtml(item.password)}')">••••••••</span>
+        </div>
+        ${item.url ? `<div class="card-field"><span class="field-label">URL:</span><span class="field-value" onclick="copyField(event, '${escapeHtml(item.url)}')">${escapeHtml(item.url)}</span></div>` : ''}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div class="card-tags">
@@ -337,33 +335,26 @@ function renderCardCard(item) {
   const isExpiring = checkExpiring(item.expiryDate);
   
   return `
-    <div class="unified-card card-card">
+    <div class="unified-card card-card" data-id="${item.id}" data-type="card" onclick="selectCard(event, '${item.id}', 'card')">
       <div class="card-header">
         <div class="card-icon">💳</div>
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
           <div class="card-subtitle">Carta ${isExpiring ? '⚠️' : ''}</div>
         </div>
-        <div class="card-actions">
-          <button class="btn btn-small btn-secondary" onclick="copyCardNumber('${item.id}')" title="Copia">
-            📋
-          </button>
-          <button class="btn btn-small btn-secondary" onclick="editCard('${item.id}')" title="Modifica">
-            ✏️
-          </button>
-          <button class="btn btn-small btn-danger" onclick="deleteCard('${item.id}')" title="Elimina">
-            🗑️
-          </button>
-        </div>
       </div>
       <div class="card-body">
         <div class="card-field">
           <span class="field-label">Numero:</span>
-          <span class="field-value">${maskedNumber}</span>
+          <span class="field-value" onclick="copyField(event, '${item.cardNumber}')">${maskedNumber}</span>
         </div>
         <div class="card-field">
-          <span class="field-label">Scadenza:</span>
-          <span class="field-value">${escapeHtml(item.expiryDate)}</span>
+          <span class="field-label">CVV:</span>
+          <span class="field-value" onclick="copyField(event, '${item.cvv}')">•••</span>
+        </div>
+        <div class="card-field">
+          <span class="field-label">Scad:</span>
+          <span class="field-value" onclick="copyField(event, '${escapeHtml(item.expiryDate)}')">${escapeHtml(item.expiryDate)}</span>
         </div>
       </div>
       ${item.tags && item.tags.length > 0 ? `
@@ -380,26 +371,17 @@ function renderDocumentCard(item) {
   const isExpiring = item.expiryDate && checkDocExpiring(item.expiryDate);
   
   return `
-    <div class="unified-card document-card">
+    <div class="unified-card document-card" data-id="${item.id}" data-type="document" onclick="selectCard(event, '${item.id}', 'document')">
       <div class="card-header">
         <div class="card-icon">${typeIcon}</div>
         <div class="card-info">
           <div class="card-title">${escapeHtml(item.title)}</div>
           <div class="card-subtitle">Documento ${isExpiring ? '⚠️' : ''}</div>
         </div>
-        <div class="card-actions">
-          ${item.imageData ? `<button class="btn btn-small btn-secondary" onclick="viewDocImage('${item.id}')" title="Vedi">👁️</button>` : ''}
-          <button class="btn btn-small btn-secondary" onclick="editDocument('${item.id}')" title="Modifica">
-            ✏️
-          </button>
-          <button class="btn btn-small btn-danger" onclick="deleteDocument('${item.id}')" title="Elimina">
-            🗑️
-          </button>
-        </div>
       </div>
       <div class="card-body">
-        ${item.docNumber ? `<div class="card-field"><span class="field-label">N°:</span><span class="field-value">${escapeHtml(item.docNumber)}</span></div>` : ''}
-        ${item.expiryDate ? `<div class="card-field"><span class="field-label">Scadenza:</span><span class="field-value">${formatDate(item.expiryDate)}</span></div>` : ''}
+        ${item.docNumber ? `<div class="card-field"><span class="field-label">N°:</span><span class="field-value" onclick="copyField(event, '${escapeHtml(item.docNumber)}')">${escapeHtml(item.docNumber)}</span></div>` : ''}
+        ${item.expiryDate ? `<div class="card-field"><span class="field-label">Scad:</span><span class="field-value" onclick="copyField(event, '${formatDate(item.expiryDate)}')">${formatDate(item.expiryDate)}</span></div>` : ''}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div class="card-tags">
@@ -423,6 +405,145 @@ function openAddMenu() {
   if (menu) {
     menu.classList.add('show');
   }
+}
+
+// Selection and Actions
+function selectCard(event, id, type) {
+  // Prevent selection if clicking on a field value
+  if (event.target.classList.contains('field-value')) {
+    return;
+  }
+  
+  event.stopPropagation();
+  
+  // Deselect all cards
+  document.querySelectorAll('.unified-card').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // Select this card
+  const card = event.currentTarget;
+  card.classList.add('selected');
+  
+  // Update state
+  state.selectedItem = { id, type };
+  
+  // Enable toolbar buttons
+  document.getElementById('edit-btn').disabled = false;
+  document.getElementById('duplicate-btn').disabled = false;
+  document.getElementById('delete-btn').disabled = false;
+}
+
+function copyField(event, value) {
+  event.stopPropagation();
+  
+  const element = event.target;
+  
+  navigator.clipboard.writeText(value).then(() => {
+    // Visual feedback
+    element.classList.add('copied');
+    setTimeout(() => {
+      element.classList.remove('copied');
+    }, 1000);
+    
+    // Auto-clear after 30 seconds
+    setTimeout(() => {
+      navigator.clipboard.writeText('');
+    }, 30000);
+  }).catch(err => {
+    console.error('Errore copia:', err);
+  });
+}
+
+function editSelected() {
+  if (!state.selectedItem) return;
+  
+  const { id, type } = state.selectedItem;
+  
+  if (type === 'password') {
+    editPassword(id);
+  } else if (type === 'card') {
+    editCard(id);
+  } else if (type === 'document') {
+    editDocument(id);
+  }
+}
+
+function duplicateSelected() {
+  if (!state.selectedItem) return;
+  
+  const { id, type } = state.selectedItem;
+  let item, newItem;
+  
+  if (type === 'password') {
+    item = state.passwords.find(p => p.id === id);
+    if (!item) return;
+    
+    newItem = {
+      ...item,
+      id: generateId(),
+      title: item.title + ' (copia)',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    
+    state.passwords.push(newItem);
+    storage.save('passwords', state.passwords);
+  } else if (type === 'card') {
+    item = state.cards.find(c => c.id === id);
+    if (!item) return;
+    
+    newItem = {
+      ...item,
+      id: generateId(),
+      title: item.title + ' (copia)',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    
+    state.cards.push(newItem);
+    storage.save('cards', state.cards);
+  } else if (type === 'document') {
+    item = state.documents.find(d => d.id === id);
+    if (!item) return;
+    
+    newItem = {
+      ...item,
+      id: generateId(),
+      title: item.title + ' (copia)',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    
+    state.documents.push(newItem);
+    storage.save('documents', state.documents);
+  }
+  
+  renderUnifiedList();
+}
+
+function deleteSelected() {
+  if (!state.selectedItem) return;
+  
+  if (!confirm('Sei sicuro di voler eliminare questo elemento?')) {
+    return;
+  }
+  
+  const { id, type } = state.selectedItem;
+  
+  if (type === 'password') {
+    deletePassword(id);
+  } else if (type === 'card') {
+    deleteCard(id);
+  } else if (type === 'document') {
+    deleteDocument(id);
+  }
+  
+  // Clear selection
+  state.selectedItem = null;
+  document.getElementById('edit-btn').disabled = true;
+  document.getElementById('duplicate-btn').disabled = true;
+  document.getElementById('delete-btn').disabled = true;
 }
 
 function renderPasswordList(filteredPasswords = null) {
@@ -716,14 +837,11 @@ window.createBackup = createBackup;
 
 function switchTab(tab) {
   state.currentTab = tab;
-  
-  // Update tab buttons
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.remove('active');
-  });
-  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  
-  // Render unified list with filter
+  renderUnifiedList();
+}
+
+function handleFilterChange(e) {
+  state.currentTab = e.target.value;
   renderUnifiedList();
 }
 
@@ -1003,6 +1121,11 @@ window.copyCardNumber = copyCardNumber;
 window.copyCVV = copyCVV;
 window.openAddMenu = openAddMenu;
 window.toggleAddMenu = toggleAddMenu;
+window.selectCard = selectCard;
+window.copyField = copyField;
+window.editSelected = editSelected;
+window.duplicateSelected = duplicateSelected;
+window.deleteSelected = deleteSelected;
 
 
 // ===== DOCUMENT MANAGEMENT =====
